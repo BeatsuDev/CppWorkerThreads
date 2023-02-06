@@ -18,9 +18,10 @@ class Workers {
 };
 
 class Worker {
-    std::list<std::function<void()>> &task_list;
+    std::list<std::function<void()>> & task_list;
     std::atomic<bool> keep_running;
-    mutex task_lock;
+    std::mutex task_lock;
+
     public:
         Worker();
         void run();

@@ -34,7 +34,7 @@ void Worker::run() {
     while (this->keep_running) {
         std::function<void> task;
         if (!this->task_list.empty()) {
-            lock_guard<std::mutex> lock(task_lock);
+            std::lock_guard<std::mutex> std::lock(task_lock);
             this->task_list.pop_front();
             task = this->task_list.front();
         }
