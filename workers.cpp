@@ -26,6 +26,7 @@ namespace workers {
                     task_list.pop_front();
                 }
             }
+
             if (task) {
                 task();
             } else {
@@ -35,11 +36,15 @@ namespace workers {
     }
 
     Workers::Workers(int worker_count) {
+        this->worker_count = worker_count;
+    }
+
+    void Workers::start() {
         running = true;
         for (int i = 0; i < worker_count; i++) {
             worker_threads.emplace_back(std::thread(worker, i, std::ref(running), std::ref(task_list)));
         }
-        return;
+
     }
 
     void Workers::post(std::function<void()> task) {

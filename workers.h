@@ -10,10 +10,11 @@ namespace workers {
             std::list<std::thread> worker_threads;
             std::list<std::function<void()>> task_list;
             std::atomic<bool> running;
+            int worker_count;
 
         public:
             Workers(int worker_count);
-            // void start();
+            void start();
             void post(std::function<void()>);
             void join();
     };
