@@ -24,18 +24,20 @@ int main() {
     event_loop.start();
 
     this_thread::sleep_for(1s);
-    
+
     worker_threads.post([] {
         // Task A
         this_thread::sleep_for(1s);
         print_thread_safe("Hello from task A!");
     });
+
     worker_threads.post([] {
         this_thread::sleep_for(1s);
         print_thread_safe("Hello from task B!");
         // Task B
         // Might run in parallel with task A
     });
+
     event_loop.post([] {
         this_thread::sleep_for(0.5s);
         print_thread_safe("Hello from task C!");
