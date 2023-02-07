@@ -6,43 +6,67 @@
 #include <iostream>
 #include <functional>
 
-std::mutex cout_lock;
-std::mutex task_lock;
+using namespace std::chrono_literals;
 
-void worker(int i, std::atomic<bool> &running, std::list<std::function<void()>> &task_list) {
-    {
-        const std::lock_guard<std::mutex> lock(cout_lock);
-        std::cout << "Hello from thread " << i << "\n";
-    }
-    while (running) {
-        const std::lock_guard<std::mutex> lock(task_lock);
-        /*
-        std::function<void()> task;
-        if (!task_list.empty()) {
-            task = task_list.front();
-            task_list.pop_front();
+namespace workers {
+    std::mutex cout_lock;
+    std::mutex task_lock;
+
+    void worker(int i, std::atomic<bool> &running, std::list<std::function<void()>> &task_list) {
+        {
+            const std::lock_guard<std::mutex> lock(cout_lock);
+            std::cout << "Hello from thread " << i << "\n";
         }
-        task();
-        */
+        while (running) {
+            std::function<void()> task;
+            {
+                const std::lock_guard<std::mutex> lock(task_lock);
+                if (!task_list.empty()) {
+                    task = task_list.front();
+                    task_list.pop_front();
+                }
+            }
+            if (task) {
+                task();
+            } else {
+                std::this_thread::sleep_for(1ms);
+            }
+        }
     }
-}
 
-Workers::Workers(int worker_count) {
-    running = true;
-    for (int i = 0; i < worker_count; i++) {
-        worker_threads.emplace_back(std::thread(worker, i, std::ref(running), std::ref(task_list)));
+    Workers::Workers(int worker_count) {
+        running = true;
+        for (int i = 0; i < worker_count; i++) {
+            worker_threads.emplace_back(std::thread(worker, i, std::ref(running), std::ref(task_list)));
+        }
+        return;
     }
-    return;
-}
 
-void Workers::post(std::function<void()> task) {
+    void Workers::post(std::function<void()> task) {
+        {
+            const std::lock_guard<std::mutex> lock(task_lock);
+            task_list.emplace_back(task);
+        }
+    }
 
-}
+    void Workers::join() {
+        {
+            std::lock_guard<std::mutex> lock(cout_lock);
+            // std::clog << "Waiting for tasks to finish...\n";
+        }
 
-void Workers::join() {
-    std::cout << "Joining all threads!\n";
-    running = false;
-    for (std::thread &t : worker_threads) {
-        t.join();
+        // Wait for the task list to become empty
+        while (!task_list.empty()) {
+            std::this_thread::sleep_for(1ms);
+        }
+        
+        {
+            std::lock_guard<std::mutex> lock(cout_lock);
+            // std::cout << "Joining all threads!\n";
+        }
+        running = false;
+        for (std::thread &t : worker_threads) {
+            t.join();
+        }
     }
 }

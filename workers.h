@@ -2,16 +2,19 @@
 #include <thread>
 #include <functional>
 #include <atomic>
+#include <mutex>
 
-class Workers {
-    private:
-        std::list<std::thread> worker_threads;
-        std::list<std::function<void()>> task_list;
-        std::atomic<bool> running;
+namespace workers {
+    class Workers {
+        private:
+            std::list<std::thread> worker_threads;
+            std::list<std::function<void()>> task_list;
+            std::atomic<bool> running;
 
-    public:
-        Workers(int worker_count);
-        // void start();
-        void post(std::function<void()>);
-        void join();
-};
+        public:
+            Workers(int worker_count);
+            // void start();
+            void post(std::function<void()>);
+            void join();
+    };
+}
